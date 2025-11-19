@@ -8,7 +8,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 if [ -z "$1" ]; then
-    echo -e "${RED} Error: Debes especificar el entorno${NC}"
+    echo -e "${RED}✗ Error: Debes especificar el entorno${NC}"
     echo "Uso: ./switch.sh [blue|green]"
     exit 1
 fi
@@ -16,13 +16,14 @@ fi
 ENV=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 
 if [ "$ENV" != "blue" ] && [ "$ENV" != "green" ]; then
-    echo -e "${RED} Error: Entorno inválido${NC}"
+    echo -e "${RED}✗ Error: Entorno inválido${NC}"
     echo "Usa: blue o green"
     exit 1
 fi
 
-echo -e "${YELLOW} Cambiando a entorno $ENV...${NC}"
+echo -e "${YELLOW}⚙️  Cambiando a entorno $ENV...${NC}"
 
+# Actualizar archivo local primero
 cat > nginx.conf << EOFNGINX
 worker_processes auto;
 error_log /var/log/nginx/error.log warn;
@@ -50,11 +51,40 @@ http {
 }
 EOFNGINX
 
-docker cp nginx.conf nginx-proxy:/etc/nginx/nginx.conf
-docker exec nginx-proxy nginx -s reload
+echo -e "${YELLOW}📋 Archivo nginx.conf actualizado${NC}"
+
+# Verificar que el archivo se creó correctamente
+if [ ! -f nginx.conf ]; then
+    echo -e "${RED}✗ Error: No se pudo crear nginx.conf${NC}"
+    exit 1
+fi
+
+# Recargar Nginx usando el volumen montado
+echo -e "${YELLOW} Recargando Nginx...${NC}"
+
+# El volumen en docker-compose.yml ya está montado como :ro (read-only)
+# Necesitamos recrear el contenedor para que tome el nuevo archivo
+docker-compose restart nginx
+
+echo -e "${YELLOW} Esperando que Nginx se reinicie...${NC}"
+sleep 3
+
+# Verificar que Nginx esté funcionando
+if curl -f -s http://localhost > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Nginx reiniciado correctamente${NC}"
+else
+    echo -e "${RED}✗ Error: Nginx no responde${NC}"
+    exit 1
+fi
 
 echo ""
-echo -e "${GREEN} Cambio exitoso a $ENV!${NC}"
+echo -e "${GREEN}✓ Cambio exitoso a $ENV!${NC}"
 echo ""
-echo "Verifica en: http://localhost"
+echo -e "${BLUE} URLs de acceso:${NC}"
+echo "  Nginx Proxy: http://localhost"
+echo "  Blue directo: http://localhost:8081"
+echo "  Green directo: http://localhost:8082"
+echo ""
+echo -e "${YELLOW} Verifica el cambio:${NC}"
+echo "  curl http://localhost"
 echo ""
