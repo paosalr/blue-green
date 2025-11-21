@@ -23,7 +23,6 @@ fi
 
 echo -e "${YELLOW}⚙️  Cambiando a entorno $ENV...${NC}"
 
-# Actualizar archivo local primero
 cat > nginx.conf << EOFNGINX
 worker_processes auto;
 error_log /var/log/nginx/error.log warn;
@@ -51,19 +50,15 @@ http {
 }
 EOFNGINX
 
-echo -e "${YELLOW}📋 Archivo nginx.conf actualizado${NC}"
+echo -e "${YELLOW} Archivo nginx.conf actualizado${NC}"
 
-# Verificar que el archivo se creó correctamente
 if [ ! -f nginx.conf ]; then
     echo -e "${RED}✗ Error: No se pudo crear nginx.conf${NC}"
     exit 1
 fi
 
-# Recargar Nginx usando el volumen montado
 echo -e "${YELLOW} Recargando Nginx...${NC}"
 
-# El volumen en docker-compose.yml ya está montado como :ro (read-only)
-# Necesitamos recrear el contenedor para que tome el nuevo archivo
 docker-compose restart nginx
 
 echo -e "${YELLOW} Esperando que Nginx se reinicie...${NC}"

@@ -42,7 +42,7 @@ if ! ngrok config check &> /dev/null; then
 fi
 
 # Verificar servicios
-echo -e "${YELLOW}📡 Verificando servicios...${NC}"
+echo -e "${YELLOW} Verificando servicios...${NC}"
 if ! docker ps | grep -q "nginx-proxy"; then
     echo -e "${RED} Servicios no están corriendo${NC}"
     echo ""

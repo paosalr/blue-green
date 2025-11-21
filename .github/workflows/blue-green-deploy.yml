@@ -57,11 +57,26 @@ jobs:
 
       - name: Deploy y Test
         run: |
-          chmod +x deploy.sh
+          chmod +x deploy.sh switch.sh status.sh stop.sh
           ./deploy.sh
           sleep 30
           chmod +x status.sh
           ./status.sh
+
+          echo "Ejecutando switch automático..."
+          ./switch.sh
+          sleep 5
+          ./status.sh
+          curl -f http://localhost || (docker logs bluegreen-nginx && exit 1)
+
+          echo "Ejecutando switch automático de nuevo..."
+          ./switch.sh
+          sleep 5
+          ./status.sh
+          curl -f http://localhost || (docker logs bluegreen-nginx && exit 1)
+
           curl -f http://localhost:8081
           curl -f http://localhost:8082
           curl -f http://localhost
+
+          ./stop.sh
